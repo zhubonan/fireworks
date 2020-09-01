@@ -1456,6 +1456,7 @@ class LaunchPad(FWSerializable):
                             'fw_id']
                     if fw_id in lost_fw_ids:
                         self.rerun_fw(fw_id)
+                print(f"Finished processing launch {lid}")
 
         inconsistent_fw_ids = []
         inconsistent_query = query or {}
