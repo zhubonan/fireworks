@@ -1403,7 +1403,8 @@ class LaunchPad(FWSerializable):
 
         bad_launch_data = self.launches.find(lostruns_query,
                                              {'launch_id': 1, 'fw_id': 1})
-        for ld in bad_launch_data:
+        print("Bad runs data obtained")
+        for ld in tqdm(bad_launch_data, desc='Processing'):
             bad_launch = True
             if max_runtime or min_runtime:
                 bad_launch = False
@@ -1419,7 +1420,7 @@ class LaunchPad(FWSerializable):
                 lost_launch_ids.append(ld['launch_id'])
                 potential_lost_fw_ids.append(ld['fw_id'])
 
-        for fw_id in potential_lost_fw_ids:  # tricky: figure out what's actually lost
+        for fw_id in tqdm(potential_lost_fw_ids, desc='Processing'):  # tricky: figure out what's actually lost
             f = self.fireworks.find_one({"fw_id": fw_id},
                                         {"launches": 1, "state": 1})
             # only RUNNING FireWorks can be "lost", i.e. not defused or archived
@@ -1439,24 +1440,26 @@ class LaunchPad(FWSerializable):
                             fw_id)  # all Launches not lost are anyway FIZZLED / ARCHIVED
 
         if fizzle or rerun:
-            for lid in lost_launch_ids:
-                self.mark_fizzled(lid)
+            for lid in tqdm(lost_launch_ids, desc='Rerun/Fizzle'):
+                try:
+                    self.mark_fizzled(lid)
 
-                # for offline runs, you want to forget about the run
-                # see: https://groups.google.com/forum/#!topic/fireworkflows/oimFmE5tZ4E
-                offline_run = self.offline_runs.find(
-                    {"launch_id": lid, "deprecated": False}).count() > 0
-                if offline_run:
-                    self.forget_offline(lid, launch_mode=True)
+                    # for offline runs, you want to forget about the run
+                    # see: https://groups.google.com/forum/#!topic/fireworkflows/oimFmE5tZ4E
+                    offline_run = self.offline_runs.find(
+                        {"launch_id": lid, "deprecated": False}).count() > 0
+                    if offline_run:
+                        self.forget_offline(lid, launch_mode=True)
 
-                if rerun:
-                    fw_id = \
-                        self.launches.find_one({"launch_id": lid},
-                                               {"fw_id": 1})[
-                            'fw_id']
-                    if fw_id in lost_fw_ids:
-                        self.rerun_fw(fw_id)
-                print(f"Finished processing launch {lid}")
+                    if rerun:
+                        fw_id = \
+                            self.launches.find_one({"launch_id": lid},
+                                                {"fw_id": 1})[
+                                'fw_id']
+                        if fw_id in lost_fw_ids:
+                            self.rerun_fw(fw_id)
+                except Exception:
+                    print("Cannot process launch{}".format(lid))
 
         inconsistent_fw_ids = []
         inconsistent_query = query or {}

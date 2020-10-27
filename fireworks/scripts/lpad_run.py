@@ -821,7 +821,7 @@ def orphaned(args):
 
     # get_wfs
     orphaned_fw_ids = []
-    for fw_id in fw_ids:
+    for fw_id in tqdm(fw_ids):
         query = {'nodes': fw_id}
         wf_ids = lp.get_wf_ids(query)
         if len(wf_ids) == 0:
