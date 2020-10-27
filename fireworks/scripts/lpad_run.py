@@ -20,6 +20,7 @@ import datetime
 import traceback
 from six.moves import input, zip
 from flask import g
+from tqdm import tqdm
 
 from pymongo import DESCENDING, ASCENDING
 import ruamel.yaml as yaml
@@ -557,7 +558,7 @@ def reignite_wfs(args):
 def defuse_fws(args):
     lp = get_lp(args)
     fw_ids = parse_helper(lp, args)
-    for f in fw_ids:
+    for f in tqdm(fw_ids):
         lp.defuse_fw(f)
         lp.m_logger.debug('Processed fw_id: {}'.format(f))
     lp.m_logger.info('Finished defusing {} FWs'.format(len(fw_ids)))
@@ -566,7 +567,7 @@ def defuse_fws(args):
 def pause_fws(args):
     lp = get_lp(args)
     fw_ids = parse_helper(lp, args)
-    for f in fw_ids:
+    for f in tqdm(fw_ids):
         lp.pause_fw(f)
         lp.m_logger.debug('Processed fw_id: {}'.format(f))
     lp.m_logger.info('Finished pausing {} FWs'.format(len(fw_ids)))
